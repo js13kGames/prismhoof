@@ -102,7 +102,7 @@
      */
     const SEQUENCE = [
         { code: 'Space', step: 4, type: 'keydown' },
-        { code: 'ShiftLeft', step: 6, type: 'keydown' },
+        { code: 'ShiftLeft', step: 5, type: 'keydown' },
     ];
 
     /**
@@ -113,10 +113,19 @@
      * cover wants the opposite, and going past the fit also carries the chamber's
      * bright border off the edges, so the art stops looking like a screenshot.
      */
-    const ZOOM = 6.1;
+    const ZOOM = 3.5;
 
-    /** Fixed-timestep steps before the frame is captured. */
-    const WARM_UP_STEPS = 22;
+    /**
+     * Which frame of the jump is captured, and it is the whole character.
+     *
+     * Two frames after the jump key, the unicorn is at the top of its push: head
+     * up, **horn clear of the mane and silhouetted against the sun**, legs tucked,
+     * mane and tail streaming back. Four frames later the head is down and the
+     * horn is swallowed by its own outline - which is a lot of ways to draw
+     * something that is no longer recognisably a unicorn. Every frame from 9
+     * onwards has that problem; this is the one that reads at 160 pixels.
+     */
+    const WARM_UP_STEPS = 6;
 
     /**
      * Where the camera sits relative to the unicorn on the captured frame.
@@ -287,7 +296,6 @@
         refreshPalette();
 
         const scene = buildLevelWorld(SCENE);
-        scene.world.camera.zoom = zoomOverride || ZOOM;
         for (const code of HELD) press(code, 'keydown');
 
         const steps = stepsOverride || WARM_UP_STEPS;
@@ -298,6 +306,14 @@
         }
 
         scene.world.camera.snapTo(scene.unicorn.x + CAMERA_OFFSET_X, scene.unicorn.y + CAMERA_OFFSET_Y);
+
+        // Set after the warm-up, and onto `viewZoom` - the property the camera
+        // actually draws through. It used to be assigned to `camera.zoom` before
+        // the loop, which is not a property the camera has: the cover was being
+        // rendered at whatever zoom the game's own chase camera had damped to,
+        // and the unicorn came out the size it is in play rather than the size a
+        // poster wants. Nothing else here changed; this line is the whole cover.
+        scene.world.camera.viewZoom = zoomOverride || ZOOM;
 
         // Everything but the unicorn goes: the world on this cover is drawn
         // below, not taken from a level.
@@ -313,8 +329,8 @@
         const pose = buildUnicornPose(scene.unicorn);
         const tip = hornTipPosition(scene.unicorn, pose);
         const camera = scene.world.camera;
-        const tipX = (tip.x - camera.x) * camera.zoom + CANVAS_WIDTH / 2;
-        const tipY = (tip.y - camera.y) * camera.zoom + CANVAS_HEIGHT / 2;
+        const tipX = (tip.x - camera.x) * camera.viewZoom + CANVAS_WIDTH / 2;
+        const tipY = (tip.y - camera.y) * camera.viewZoom + CANVAS_HEIGHT / 2;
         // The pose is built during the update and cached, so clearing the glow
         // on the unicorn alone changes nothing - it has to be cleared on the
         // pose the renderer will actually read.
