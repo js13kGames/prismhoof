@@ -1,4 +1,8 @@
 ---
+genres:
+  - platformer
+  - adventure
+  - action
 directors_cut: https://prismhoof.pages.dev/
 # See github.com/js13kGames/hello-world for supported frontmatter
 ---
